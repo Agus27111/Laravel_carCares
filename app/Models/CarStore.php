@@ -36,7 +36,7 @@ class CarStore extends Model
     $this->attributes['slug']=Str::slug($value);
    }
 
-    public function city():BelongsTo 
+    public function city():BelongsTo
     {
         return $this->belongsTo(City::class, 'city_id');
     }
@@ -46,8 +46,19 @@ class CarStore extends Model
         return $this->hasMany(StorePhoto::class);
     }
 
-    public function storeServices():HasMany
-    {
-        return $this->hasMany(StoreService::class, 'car_store_id');
-    }
+    // public function storeServices():HasMany
+    // {
+    //     return $this->hasMany(StoreService::class, 'car_store_id');
+    // }
+
+    public function carServices(): BelongsToMany
+{
+    return $this->belongsToMany(
+        CarService::class,
+        'store_services',
+        'car_store_id',
+        'car_service_id'
+    );
+}
+
 }

@@ -33,7 +33,7 @@
               </div>
               <div class="flex flex-col">
                 <p class="font-semibold text-sm leading-[21px]">{{ $service->name }}</p>
-                <p class="text-xs leading-[18px] text-[#909DBF]">{{ optional($service->storeServices)->count() }} Stores</p>
+                <p class="text-xs leading-[18px] text-[#909DBF]">{{ $service->carStores()->count() }} Stores</p>
               </div>
             </div>
           </a>

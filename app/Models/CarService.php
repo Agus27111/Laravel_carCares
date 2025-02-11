@@ -31,8 +31,19 @@ class CarService extends Model
 
    }
 
-    public function storeServices():HasMany
+    // public function storeServices():HasMany
+    // {
+    //     return $this->hasMany(StoreService::class, 'car_service_id');
+    // }
+
+    public function carStores(): BelongsToMany
     {
-        return $this->hasMany(StoreService::class, 'car_service_id');
+        return $this->belongsToMany(
+            CarStore::class,
+            'store_services',
+            'car_service_id',
+            'car_store_id'
+        );
     }
+
 }

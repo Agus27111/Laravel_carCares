@@ -1,14 +1,5 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="./output.css" rel="stylesheet">
-  <link href="./main.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-</head>
-<body>
-  <main class="bg-[#FAFAFA] max-w-[640px] mx-auto min-h-screen relative flex flex-col has-[#CTA-nav]:pb-[120px] has-[#Bottom-nav]:pb-[120px]">
+@extends('front.layouts.app')
+@section('content')
     <div class="flex flex-col items-center gap-[50px] max-w-[330px] m-auto h-fit w-full py-6">
       <div class="w-[120px] h-[120px] flex shrink-0">
         <img src="assets/images/icons/illustration1.svg" class="w-full h-full object-contain" alt="icon">
@@ -41,6 +32,4 @@
         <a href="booking-details.html" class="w-full rounded-full border border-[#E9E8ED] p-[12px_20px] bg-white text-center font-bold transition-all duration-300 hover:ring-2 hover:ring-[#FF8E62]">Check My Booking</a>
       </div>
     </div>
-  </main>
-</body>
-</html>
+@endsection
