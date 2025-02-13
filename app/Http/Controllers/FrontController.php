@@ -11,6 +11,7 @@ use App\Models\BookingTransaction;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\StoreBookingRequest;
 use App\Http\Requests\StoreBookingPaymentRequest;
+use Termwind\Components\Dd;
 
 class FrontController extends Controller
 {
@@ -91,6 +92,10 @@ class FrontController extends Controller
         session()->put('customerPhoneNumber', $request->input('phone_number'));
         session()->put('customerTimeAt', $request->input('time_at'));
 
+        session()->save();
+
+        // dd(session()->all());
+
         $serviceTypeId = session()->get('serviceTypeId');
         $carStoreId = session()->get('carStoreId');
 
@@ -110,78 +115,85 @@ class FrontController extends Controller
         ]);
     }
 
-    public function booking_payment(CarStore $carStore, CarService $carService)
-    {
-        $price = $carService->price;  // Harga utama
-        $bookingFee = 25000;          // Booking Fee tetap
-        $ppn = 0.11 * $price;         // PPN 11%
-        $grandTotal = $price + $bookingFee + $ppn; // Hitung total
+    public function booking_payment(CarStore $carStore, CarService $carService) {
+        //  dd(session()->all());
+        session()->keep(['customerName', 'customerPhoneNumber', 'customerTimeAt']);
+        // Simpan kembali session agar tetap aktif
+        session()->put('customerName', session('customerName'));
+        session()->put('customerPhoneNumber', session('customerPhoneNumber'));
+        session()->put('customerTimeAt', session('customerTimeAt'));
+
+        $price = $carService->price;
+        $bookingFee = 25000;
+        $ppn = 0.11 * $price;
+        $grandTotal = $price + $bookingFee + $ppn;
 
         session()->put('totalAmount', $grandTotal);
         return view('front.payment', compact('carStore', 'carService', 'price', 'bookingFee', 'ppn', 'grandTotal'));
     }
 
+
     public function booking_payment_store(StoreBookingPaymentRequest $request)
-{
-    // Periksa apakah data session tersedia
-    if (!session()->has(['customerName', 'customerPhoneNumber', 'customerTimeAt', 'serviceTypeId', 'carStoreId', 'totalAmount'])) {
-        return redirect()->route('front.booking.form')->with('error', 'Session expired, please try again.');
-    }
+    {
+        //    dd(session()->all());
+        // // dd('Masuk ke booking_payment_store');
+        // // dd($request->all());
 
-    // Ambil data dari session
-    $customerName = session()->get('customerName');
-    $customerPhoneNumber = session()->get('customerPhoneNumber');
-    $customerTimeAt = session()->get('customerTimeAt');
-    $serviceTypeId = session()->get('serviceTypeId');
-    $carStoreId = session()->get('carStoreId');
-    $totalAmount = session()->get('totalAmount');
 
-    $bookingTransactionId = null; // Untuk menyimpan ID transaksi
+        // Ambil data dari session
+        $customerName = session()->get('customerName');
+        $customerPhoneNumber = session()->get('customerPhoneNumber');
+        $customerTimeAt = session()->get('customerTimeAt');
+        $serviceTypeId = session()->get('serviceTypeId');
+        $carStoreId = session()->get('carStoreId');
+        $totalAmount = session()->get('totalAmount');
 
-    // Gunakan transaksi database untuk menjaga data tetap konsisten
-    DB::transaction(function () use (
-        $request,
-        $customerName,
-        $customerPhoneNumber,
-        $customerTimeAt,
-        $serviceTypeId,
-        $carStoreId,
-        $totalAmount,
-        &$bookingTransactionId,
-    ) {
-        $validated = $request->validated();
+        $bookingTransactionId = null;
 
-        if ($request->hasFile('proof')) {
-            $proofPath = $request->file('proof')->store('proofs', 'public');
-            $validated['proof'] = $proofPath;
+        DB::transaction(function () use (
+            $request,
+            $customerName,
+            $customerPhoneNumber,
+            $customerTimeAt,
+            $serviceTypeId,
+            $carStoreId,
+            $totalAmount,
+            &$bookingTransactionId,
+        ) {
+            $validated = $request->validated();
+
+            if ($request->hasFile('proof')) {
+                $proofPath = $request->file('proof')->store('proofs', 'public');
+                $validated['proof'] = $proofPath;
+            }
+
+            $validated['name'] = $customerName;
+            $validated['total_amount'] = $totalAmount;
+            $validated['phone_number'] = $customerPhoneNumber;
+            $validated['started_at'] = Carbon::tomorrow()->format('Y-m-d');
+            $validated['time_at'] = $customerTimeAt;
+            $validated['car_service_id'] = $serviceTypeId;
+            $validated['car_store_id'] = $carStoreId;
+            $validated['is_paid'] = false;
+            $validated['trx_id'] = BookingTransaction::generateUniqueTrxId();
+
+            $newBooking = BookingTransaction::create($validated);
+
+            $bookingTransactionId = $newBooking->id; // Simpan ID transaksi
+        });
+
+        // Pastikan bookingTransactionId tidak null sebelum redirect
+        if ($bookingTransactionId) {
+            return redirect()->route('front.success.booking', $bookingTransactionId);
+        } else {
+            dd('error', 'Failed to process booking, please try again.');
         }
-
-        $validated['name'] = $customerName;
-        $validated['total_amount'] = $totalAmount;
-        $validated['phone_number'] = $customerPhoneNumber;
-        $validated['started_at'] = Carbon::tomorrow()->format('Y-m-d');
-        $validated['time_at'] = $customerTimeAt;
-        $validated['car_service_id'] = $serviceTypeId;
-        $validated['car_store_id'] = $carStoreId;
-        $validated['is_paid'] = false;
-        $validated['trx_id'] = BookingTransaction::generateUniqueTrxId();
-
-        $newBooking = BookingTransaction::create($validated);
-
-        $bookingTransactionId = $newBooking->id; // Simpan ID transaksi
-    });
-
-    // Pastikan bookingTransactionId tidak null sebelum redirect
-    if ($bookingTransactionId) {
-        return redirect()->route('front.success.booking', $bookingTransactionId);
-    } else {
-        return redirect()->route('front.booking.form')->with('error', 'Failed to process booking, please try again.');
     }
-}
 
-public function succes_booking(BookingTransaction $bookingTransaction){
+public function succes_booking(BookingTransaction $bookingTransaction)
+    {
     return view('front.success_booking', compact('bookingTransaction'));
-}
+    }
 
 
 }

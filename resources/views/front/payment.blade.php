@@ -29,7 +29,7 @@
           <h2 class="font-semibold">Workshop At</h2>
           <div class="flex items-center w-full gap-[10px] bg-white">
             <div class="w-[80px] h-[60px] flex shrink-0 rounded-xl overflow-hidden">
-              <img src="{{Storage::url($carStore->thubmnail)}}" class="w-full h-full object-cover" alt="thumbnail">
+              <img src="{{ Storage::url($carStore->thumbnail) }}" class="w-full h-full object-cover" alt="thumbnail">
             </div>
             <div class="flex flex-col">
               <div class="flex items-center gap-1">
@@ -82,7 +82,17 @@
       </div>
     </div>
     <div class="flex h-full flex-1 mt-5">
-      <form action="{{ route('front.booking.payment.store') }}" method="POST"  enctype="multipart/form-data" class="w-full flex flex-col rounded-t-[30px] p-5 pt-[30px] gap-[26px] bg-white overflow-x-hidden mb-0 mt-auto">
+        @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+      <form method="POST" action="{{ route('front.booking.payment.store') }}" enctype="multipart/form-data" class="w-full flex flex-col rounded-t-[30px] p-5 pt-[30px] gap-[26px] bg-white overflow-x-hidden mb-0 mt-auto">
         @csrf
         <div id="Payment-info" class="flex flex-col gap-4">
           <h2 class="font-semibold">Send Payment</h2>
@@ -125,7 +135,7 @@
             <div class="w-6 h-6 flex shrink-0 mr-[10px]">
               <img src="{{asset('assets/images/icons/gallery.svg')}}" alt="icon">
             </div>
-            <button type="button" id="Upload-btn" class="appearance-none outline-none text-[#909DBF] w-full text-left" onclick="document.getElementById('Proof').click()">
+            <button type="submit" id="Upload-btn" class="appearance-none outline-none text-[#909DBF] w-full text-left" onclick="document.getElementById('Proof').click()">
               Add an attachments
             </button>
             <input type="file" name="proof" id="Proof" class="absolute -z-10" required>
@@ -134,6 +144,7 @@
         <hr class="border-[#E9E8ED]">
         <button type="submit" class="w-full rounded-full p-[12px_20px] bg-[#FF8E62] font-bold text-white">Confirm Payment</button>
       </form>
+
     </div>
 </main>
 
